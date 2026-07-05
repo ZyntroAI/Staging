@@ -1,15 +1,37 @@
-name: CI
+name: CI for CrystalCastleX
 
 on:
   push:
-    branches: [ '**' ]  # ทุก branch
+    branches: [ main, develop ]
   pull_request:
-    branches: [ main ]  # PR ที่จะ merge เข้า main
+    branches: [ main, develop ]
 
 jobs:
-  test:
+  validate-and-build:
     runs-on: ubuntu-latest
+
     steps:
-    - uses: actions/checkout@v4
-    - run: npm ci
-    - run: npm test
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'npm' # สลับเป็น 'yarn' หรือ 'pnpm' ตามมัดแพ็กเกจที่โปรเจกต์ใช้จริง
+
+    - name: Install Dependencies
+      run: npm ci
+
+    - name: Run Linter (ESLint)
+      run: npm run lint
+
+    - name: Check TypeScript Types
+      run: npx tsc --noEmit
+
+    - name: Build Next.js Application
+      run: npm run build
+      env:
+        NEXT_TELEMETRY_DISABLED: 1
+        # หากจำเป็นต้องใช้ Env ในการ Build ให้ดึงจาก GitHub Secrets 
+        # NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL }}
